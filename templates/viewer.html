@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>FastVector - Tile Viewer</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://unpkg.com/maplibre-gl@2.1.7/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.1.7/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        const path_array = window.location.pathname.split('/')
+        var map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {},
+                layers: []
+            },
+            center: [-94, 40],
+            zoom: 4
+        });
+
+        map.showTileBoundaries = true;
+        map.on('load', function () {
+            map.addSource(path_array[4], {
+                'type': 'vector',
+                'tiles': [
+                    `${window.location.origin}/api/v1/tiles/${path_array[2]}/${path_array[3]}/${path_array[4]}/{z}/{x}/{y}.pbf`
+                ],
+                'minzoom': 1,
+                'maxzoom': 20
+            });
+
+            fetch(`/api/v1/table/${path_array[2]}/${path_array[3]}/${path_array[4]}.json`)
+            .then(response => response.json())
+            .then(data => {
+
+                map.fitBounds([[data.bounds[0],data.bounds[1]],[data.bounds[2],data.bounds[3]]])
+
+                if(data.geometrytype.includes('Polygon')){
+                    map.addLayer({
+                        'id': path_array[4],
+                        'type': 'fill',
+                        'source': path_array[4],
+                        'source-layer': `${path_array[3]}.${path_array[4]}`,
+                        'paint': {
+                            'fill-color': '#bfa229',
+                            'fill-outline-color': '#7c7c75',
+                            'fill-opacity': 0.6
+                        }
+                    });
+                }
+                else if(data.geometrytype.includes('Point')){
+                    map.addLayer({
+                        'id': path_array[4],
+                        'type': 'circle',
+                        'source': path_array[4],
+                        'source-layer': `${path_array[3]}.${path_array[4]}`,
+                        'paint': {
+                            'circle-color': '#bfa229',
+                        }
+                    });
+                }
+            });
+
+
+            
+
+            // Change the cursor to a pointer when the mouse is over the places layer.
+            map.on('mouseenter', path_array[4], function () {
+                map.getCanvas().style.cursor = 'pointer'
+            })
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', path_array[4], function () {
+                map.getCanvas().style.cursor = ''
+            })
+
+            map.on('click', path_array[4], function (e) {
+                props = e.features[0].properties;
+                t = '<table style="max-height: 300px; overflow: auto">';
+                for (var key in props){
+                    t += "<tr><td>" + key + "</td><td>" + props[key] + "</td></tr>";
+                }
+                t += '</table>';
+                new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(t)
+                .addTo(map);
+            })
+        })
+
+        map.addControl(new maplibregl.NavigationControl());
+    </script>
+
+</body>
+
+</html>
