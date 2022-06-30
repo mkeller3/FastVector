@@ -1,3 +1,4 @@
+"""FastVector App - Configuration File"""
 DATABASES = {
     "data": {
         "host": "localhost",

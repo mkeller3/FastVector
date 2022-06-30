@@ -1,3 +1,5 @@
+
+"""FastVector App"""
 import shutil
 import os
 from typing import Optional
@@ -10,17 +12,18 @@ from starlette.templating import Jinja2Templates
 
 
 from db import close_db_connection, connect_to_db
-import utilities, config
+import utilities
+import config
 
 templates = Jinja2Templates(directory="templates")
 
-description = """
+DESCRIPTION = """
 A lightweight python api to serve vector tiles from PostGIS.
 """
 
 app = FastAPI(
     title="FastVector",
-    description=description,
+    description=DESCRIPTION,
     version="0.0.1",
     contact={
         "name": "Michael Keller",
@@ -54,12 +57,28 @@ async def shutdown_event():
     await close_db_connection(app)
 
 @app.get("/api/v1/tiles/{database}/{scheme}/{table}/{z}/{x}/{y}.pbf", tags=["Tiles"])
-async def tiles(database: str, scheme: str, table: str, z: int, x: int, y: int, fields: Optional[str] = None, cql_filter: Optional[str] = None):
+async def tiles(database: str, scheme: str, table: str, z: int, x: int,
+    y: int, fields: Optional[str] = None, cql_filter: Optional[str] = None):
+    """
+    Method used to return a vector of tiles for a given table.
+    """
+
     db_settings = config.DATABASES[database]
 
-    pbf, tile_cache = await utilities.get_tile(database, scheme, table, z, x, y, fields, cql_filter, db_settings, app)
+    pbf, tile_cache = await utilities.get_tile(
+        database,
+        scheme,
+        table,
+        z,
+        x,
+        y,
+        fields,
+        cql_filter,
+        db_settings,
+        app
+    )
 
-    response_code = status.HTTP_200_OK    
+    response_code = status.HTTP_200_OK
 
     max_cache_age = db_settings['cache_age_in_seconds']
 
@@ -75,7 +94,7 @@ async def tiles(database: str, scheme: str, table: str, z: int, x: int, y: int, 
                 "Cache-Control": f"max-age={max_cache_age}",
                 "tile-cache": 'true'
             }
-        )    
+        )
 
     if pbf == b"":
         response_code = status.HTTP_204_NO_CONTENT
@@ -92,13 +111,17 @@ async def tiles(database: str, scheme: str, table: str, z: int, x: int, y: int, 
 
 @app.get("/api/v1/tile/{database}/{scheme}/{table}.json", tags=["Tiles"])
 async def tiles_json(database: str, scheme: str, table: str, request: Request):
+    """
+    Method used to return a tilejson information for a given table.
+    """
+
     def get_tile_url() -> str:
         """Return tile url for layer """
         url = str(request.base_url)
         url += f"api/v1/tiles/{database}/{scheme}/{table}"
         url += "/{z}/{x}/{y}.pbf"
         return url
-    
+
     def get_viewer_url() -> str:
         """Return viewer url for layer """
         url = str(request.base_url)
@@ -108,29 +131,22 @@ async def tiles_json(database: str, scheme: str, table: str, request: Request):
     return {
         "tilejson": "2.2.0",
         "name": f"{scheme}.{table}",
-        # "description": "A simple, light grey world.",
         "version": "1.0.0",
-        # "attribution": "<a href='http://openstreetmap.org'>OSM contributors</a>",
-        # "legend": "Dangerous zones are red, safe zones are green",
         "scheme": "xyz",
         "tiles": [
             get_tile_url()
         ],
         "viewerurl": get_viewer_url(),
-        # "grids": [
-        #     "http://localhost:8888/admin/1.0.0/broadband/{z}/{x}/{y}.grid.json"
-        # ],
-        # "data": [
-        #     "http://localhost:8888/admin/data.geojson"
-        # ],
         "minzoom": 0,
         "maxzoom": 22,
-        # "bounds": [ -180, -85.05112877980659, 180, 85.0511287798066 ],
-        # "center": [ -76.275329586789, 39.153492567373, 8 ]
     }
 
 @app.get("/api/v1/tables.json", tags=["Tables"])
 async def tables(request: Request):
+    """
+    Method used to return a list of tables available to query for vector tiles.
+    """
+
     def get_detail_url(table: object) -> str:
         """Return tile url for layer """
         url = str(request.base_url)
@@ -141,21 +157,25 @@ async def tables(request: Request):
         url = str(request.base_url)
         url += f"viewer/{table['database']}/{table['schema']}/{table['name']}"
         return url
-    tables = await utilities.get_tables_metadata(app)
-    for table in tables:
+    db_tables = await utilities.get_tables_metadata(app)
+    for table in db_tables:
         table['detailurl'] = get_detail_url(table)
         table['viewerurl'] = get_viewer_url(table)
-    return tables
+    return db_tables
 
 @app.get("/api/v1/table/{database}/{scheme}/{table}.json", tags=["Tables"])
 async def table_json(database: str, scheme: str, table: str, request: Request):
+    """
+    Method used to return a information for a given table.
+    """
+
     def get_tile_url() -> str:
         """Return tile url for layer """
         url = str(request.base_url)
         url += f"api/v1/tiles/{database}/{scheme}/{table}"
         url += "/{z}/{x}/{y}.pbf"
         return url
-    
+
     def get_viewer_url() -> str:
         """Return viewer url for layer """
         url = str(request.base_url)
@@ -178,14 +198,19 @@ async def table_json(database: str, scheme: str, table: str, request: Request):
 
 @app.get("/api/v1/cache_size", tags=["Cache"])
 async def cache_size():
+    """
+    Method used to a list of cache sizes for each table that has cache.
+    """
+
     cache_sizes = []
+
     def get_size(start_path = '.'):
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(start_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                if not os.path.islink(fp):
-                    total_size += os.path.getsize(fp)
+            for file in filenames:
+                file_path = os.path.join(dirpath, file)
+                if not os.path.islink(file_path):
+                    total_size += os.path.getsize(file_path)
 
         return total_size
     cache_folders = os.listdir(f'{os.getcwd()}/cache/')
@@ -202,6 +227,10 @@ async def cache_size():
 
 @app.delete("/api/v1/cache", tags=["Cache"])
 async def delete_cache(database: str, scheme: str, table: str):
+    """
+    Method used to delete cache for a table.
+    """
+
     if os.path.exists(f'{os.getcwd()}/cache/{database}_{scheme}_{table}'):
         shutil.rmtree(f'{os.getcwd()}/cache/{database}_{scheme}_{table}')
         return {"status": "deleted"}
@@ -210,26 +239,21 @@ async def delete_cache(database: str, scheme: str, table: str):
 
 @app.get("/api/v1/health_check", tags=["Health"])
 async def health():
+    """
+    Method used to verify server is healthy.
+    """
+
     return {"status": "UP"}
 
 @app.get("/viewer/{database}/{scheme}/{table}", response_class=HTMLResponse, tags=["Viewer"])
 async def viewer(request: Request, database: str, scheme: str, table: str):
-    return templates.TemplateResponse("viewer.html", {"request": request, "database": database, "scheme": scheme, "table": table})
+    """
+    Method used to to view a table in a web map.
+    """
 
-# @app.get("/", response_class=HTMLResponse, tags=["Home"])
-# async def viewer(request: Request):
-#     def get_detail_url(table: object) -> str:
-#         """Return tile url for layer """
-#         url = str(request.base_url)
-#         url += f"api/v1/table/{table['database']}/{table['schema']}/{table['name']}.json"
-#         return url
-#     def get_viewer_url(table: object) -> str:
-#         """Return tile url for layer """
-#         url = str(request.base_url)
-#         url += f"viewer/{table['database']}/{table['schema']}/{table['name']}"
-#         return url
-#     tables = await utilities.get_tables_metadata(app)
-#     for table in tables:
-#         table['detailurl'] = get_detail_url(table)
-#         table['viewerurl'] = get_viewer_url(table)
-#     return templates.TemplateResponse("index.html", {"request": request, "tables": tables})
+    return templates.TemplateResponse("viewer.html", {
+        "request": request,
+        "database": database,
+        "scheme": scheme,
+        "table": table
+        })

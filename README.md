@@ -64,7 +64,7 @@ Build Dockerfile into a docker image to deploy to the cloud.
 conform to the [Mapbox Vector Tile Specification](https://github.com/mapbox/vector-tile-spec), and renders them using
 WebGL.
 
-You can add a layer to the map and specify martin TileJSON endpoint as a vector source URL. You should also specify a `source-layer` property. For [Table JSON](#table-json) it is `{schema_name}.{table_name}` by default.
+You can add a layer to the map and specify TileJSON endpoint as a vector source URL. You should also specify a `source-layer` property. For [Table JSON](#table-json) it is `{schema_name}.{table_name}` by default.
 
 ```js
 map.addSource('points', {

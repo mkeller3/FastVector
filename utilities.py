@@ -1,3 +1,4 @@
+"""FastVector App - Utilities"""
 import os
 import json
 from fastapi import FastAPI
@@ -6,7 +7,11 @@ from pygeofilter.parsers.ecql import parse
 
 import config
 
-async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: int, fields: str, cql_filter: str, db_settings: object, app: FastAPI) -> bytes:
+async def get_tile(database: str, scheme: str, table: str, z: int,
+    x: int, y: int, fields: str, cql_filter: str, db_settings: object, app: FastAPI) -> bytes:
+    """
+    Method to return vector tile from database.
+    """
 
     cachefile = f'{os.getcwd()}/cache/{database}_{scheme}_{table}/{z}/{x}/{y}'
 
@@ -17,14 +22,14 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
 
     async with pool.acquire() as con:
 
-        
+
         sql_field_query = f"""
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = '{table}'
         AND column_name != 'geom';
         """
-        
+
         field_mapping = {}
 
         db_fields = await con.fetch(sql_field_query)
@@ -39,7 +44,7 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
                 field_list += f", {field['column_name']}"
         else:
             field_list = f",{fields}"
-        
+
         sql_vector_query = f"""
         SELECT ST_AsMVT(tile, '{scheme}.{table}', 4096)
         FROM (
@@ -65,7 +70,7 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
             sql_vector_query += f" AND {where_statement}"
 
         sql_vector_query += f"LIMIT {db_settings['max_features_per_tile']}) as tile"
-        
+
         tile = await con.fetchval(sql_vector_query)
 
         if fields is None and cql_filter is None and db_settings['cache_age_in_seconds'] > 0:
@@ -78,17 +83,21 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
                 except OSError:
                     pass
 
-            with open(cachefile, "wb") as f:
-                f.write(tile)
-                f.close()
+            with open(cachefile, "wb") as file:
+                file.write(tile)
+                file.close()
 
         return tile, False
 
 async def get_tables_metadata(app: FastAPI) -> list:
+    """
+    Method used to get tables metadata.
+    """
     tables_metadata = []
-    for database in config.DATABASES:
 
-        pool = app.state.databases[f'{database}_pool']
+    for database in config.DATABASES.items():
+
+        pool = app.state.databases[f'{database[0]}_pool']
 
         async with pool.acquire() as con:
             tables_query = """
@@ -105,13 +114,17 @@ async def get_tables_metadata(app: FastAPI) -> list:
                         "schema" : table['schemaname'],
                         "type" : "table",
                         "id" : f"{table['schemaname']}.{table['tablename']}",
-                        "database" : config.DATABASES[database]['database']
+                        "database" : config.DATABASES[database[0]]['database']
                     }
                 )
-    
+
     return tables_metadata
 
 async def get_table_columns(database: str, scheme: str, table: str, app: FastAPI) -> list:
+    """
+    Method used to retrieve columns for a given table.
+    """
+
     pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
@@ -132,6 +145,10 @@ async def get_table_columns(database: str, scheme: str, table: str, app: FastAPI
         return json.loads(columns)
 
 async def get_table_geometry_type(database: str, scheme: str, table: str, app: FastAPI) -> list:
+    """
+    Method used to retrieve the geometry type for a given table.
+    """
+
     pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
@@ -143,6 +160,10 @@ async def get_table_geometry_type(database: str, scheme: str, table: str, app: F
         return geometry_type
 
 async def get_table_center(database: str, scheme: str, table: str, app: FastAPI) -> list:
+    """
+    Method used to retrieve the table center for a given table.
+    """
+
     pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
@@ -155,6 +176,10 @@ async def get_table_center(database: str, scheme: str, table: str, app: FastAPI)
         return [center[0][0],center[0][1]]
 
 async def get_table_bounds(database: str, scheme: str, table: str, app: FastAPI) -> list:
+    """
+    Method used to retrieve the bounds for a given table.
+    """
+
     pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
@@ -168,5 +193,5 @@ async def get_table_bounds(database: str, scheme: str, table: str, app: FastAPI)
         FROM {scheme}.{table}
         """
         extent = await con.fetchval(query)
-        
+
         return extent
