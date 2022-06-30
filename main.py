@@ -9,8 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 from starlette.templating import Jinja2Templates
 
-
-
 from db import close_db_connection, connect_to_db
 import utilities
 import config
@@ -161,6 +159,7 @@ async def tables(request: Request):
     for table in db_tables:
         table['detailurl'] = get_detail_url(table)
         table['viewerurl'] = get_viewer_url(table)
+
     return db_tables
 
 @app.get("/api/v1/table/{database}/{scheme}/{table}.json", tags=["Tables"])
@@ -174,12 +173,14 @@ async def table_json(database: str, scheme: str, table: str, request: Request):
         url = str(request.base_url)
         url += f"api/v1/tiles/{database}/{scheme}/{table}"
         url += "/{z}/{x}/{y}.pbf"
+
         return url
 
     def get_viewer_url() -> str:
         """Return viewer url for layer """
         url = str(request.base_url)
         url += f"viewer/{database}/{scheme}/{table}"
+
         return url
 
     return {
@@ -213,6 +214,7 @@ async def cache_size():
                     total_size += os.path.getsize(file_path)
 
         return total_size
+        
     cache_folders = os.listdir(f'{os.getcwd()}/cache/')
 
     for folder in cache_folders:
@@ -256,4 +258,4 @@ async def viewer(request: Request, database: str, scheme: str, table: str):
         "database": database,
         "scheme": scheme,
         "table": table
-        })
+    })

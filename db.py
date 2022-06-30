@@ -1,6 +1,7 @@
 """FastVector App - Database Setup"""
 from fastapi import FastAPI
 import asyncpg
+
 import config
 
 async def connect_to_db(app: FastAPI) -> None:

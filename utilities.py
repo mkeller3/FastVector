@@ -142,6 +142,7 @@ async def get_table_columns(database: str, scheme: str, table: str, app: FastAPI
         AND attrelid=format('%I.%I', '{scheme}', '{table}')::regclass
         """
         columns = await con.fetchval(column_query)
+
         return json.loads(columns)
 
 async def get_table_geometry_type(database: str, scheme: str, table: str, app: FastAPI) -> list:
@@ -157,6 +158,7 @@ async def get_table_geometry_type(database: str, scheme: str, table: str, app: F
         FROM {scheme}.{table}
         """
         geometry_type = await con.fetchval(geometry_query)
+
         return geometry_type
 
 async def get_table_center(database: str, scheme: str, table: str, app: FastAPI) -> list:
@@ -173,6 +175,7 @@ async def get_table_center(database: str, scheme: str, table: str, app: FastAPI)
         FROM {scheme}.{table}
         """
         center = await con.fetch(query)
+        
         return [center[0][0],center[0][1]]
 
 async def get_table_bounds(database: str, scheme: str, table: str, app: FastAPI) -> list:
