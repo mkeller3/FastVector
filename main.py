@@ -61,7 +61,7 @@ async def tiles(database: str, scheme: str, table: str, z: int, x: int, y: int, 
 
     response_code = status.HTTP_200_OK    
 
-    max_cache_age = db_settings['cache']
+    max_cache_age = db_settings['cache_age_in_seconds']
 
     if fields is not None and cql_filter is not None:
         max_cache_age = 0

@@ -13,8 +13,7 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
     if os.path.exists(cachefile):
         return '', True
 
-    if database == "data":
-        pool = app.state.data_pool
+    pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
 
@@ -69,7 +68,7 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
         
         tile = await con.fetchval(sql_vector_query)
 
-        if fields is None and cql_filter is None and db_settings['cache'] > 0:
+        if fields is None and cql_filter is None and db_settings['cache_age_in_seconds'] > 0:
 
             cachefile_dir = f'{os.getcwd()}/cache/{database}_{scheme}_{table}/{z}/{x}'
 
@@ -87,9 +86,9 @@ async def get_tile(database: str, scheme: str, table: str, z: int, x: int, y: in
 
 async def get_tables_metadata(app: FastAPI) -> list:
     tables_metadata = []
-    for db in config.DATABASES:
-        if config.DATABASES[db]['database'] == "data":
-            pool = app.state.data_pool
+    for database in config.DATABASES:
+
+        pool = app.state.databases[f'{database}_pool']
 
         async with pool.acquire() as con:
             tables_query = """
@@ -106,15 +105,14 @@ async def get_tables_metadata(app: FastAPI) -> list:
                         "schema" : table['schemaname'],
                         "type" : "table",
                         "id" : f"{table['schemaname']}.{table['tablename']}",
-                        "database" : config.DATABASES[db]['database']
+                        "database" : config.DATABASES[database]['database']
                     }
                 )
     
     return tables_metadata
 
 async def get_table_columns(database: str, scheme: str, table: str, app: FastAPI) -> list:
-    if database == "data":
-        pool = app.state.data_pool
+    pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
         column_query = f"""
@@ -134,8 +132,7 @@ async def get_table_columns(database: str, scheme: str, table: str, app: FastAPI
         return json.loads(columns)
 
 async def get_table_geometry_type(database: str, scheme: str, table: str, app: FastAPI) -> list:
-    if database == "data":
-        pool = app.state.data_pool
+    pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
         geometry_query = f"""
@@ -146,8 +143,7 @@ async def get_table_geometry_type(database: str, scheme: str, table: str, app: F
         return geometry_type
 
 async def get_table_center(database: str, scheme: str, table: str, app: FastAPI) -> list:
-    if database == "data":
-        pool = app.state.data_pool
+    pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
         query = f"""
@@ -159,8 +155,7 @@ async def get_table_center(database: str, scheme: str, table: str, app: FastAPI)
         return [center[0][0],center[0][1]]
 
 async def get_table_bounds(database: str, scheme: str, table: str, app: FastAPI) -> list:
-    if database == "data":
-        pool = app.state.data_pool
+    pool = app.state.databases[f'{database}_pool']
 
     async with pool.acquire() as con:
         query = f"""
