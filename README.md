@@ -50,10 +50,10 @@ Build Dockerfile into a docker image to deploy to the cloud.
 | ------ | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `GET`  | `/api/v1/tables.json`                                                            | [Tables](#tables)               |
 | `GET`  | `/api/v1/table/{database}/{scheme}/{table}.json`                                 | [Table JSON](#table-json)         |
-| `GET`  | `/api/v1/tiles/{database}/{scheme}/{table}/{z}/{x}/{y}.pbf`                      | [Tiles](#tiles)               |
-| `GET`  | `/api/v1/tile/{database}/{scheme}/{table}.json`                                  | [Table TileJSON](#tiles-json)               |
-| `GET`  | `/api/v1/cache_size`                                                             | [Cache Size](#cache-size)           |
-| `DELETE`  | `/api/v1/cache`                                                               | [Delete Cache](#cache-delete)           |
+| `GET`  | `/api/v1/tiles/{database}/{scheme}/{table}/{z}/{x}/{y}.pbf`                      | [Tiles](#tiles)    |
+| `GET`  | `/api/v1/tile/{database}/{scheme}/{table}.json`                                  | [Table TileJSON](#table-tile-json) |
+| `DELETE` | `/api/v1/cache`                                                               | [Delete Cache](#cache-delete)  |
+| `GET`  | `/api/v1/cache_size`                                                             | [Cache Size](#cache-size) |
 | `GET`  | `/viewer/{database}/{scheme}/{table}`                                            | [Viewer](#viewer)               |
 | `GET`  | `/api/v1/health_check`                                                           | Server health check: returns `200 OK`            |
 
@@ -73,11 +73,11 @@ map.addSource('points', {
 });
 
 map.addLayer({
-  id: 'state_centroids',
-  type: 'circle',
-  source: 'state_centroids',
+  'id': 'state_centroids',
+  'type': 'circle',
+  'source': 'state_centroids',
   'source-layer': 'public.state_centroids',
-  paint: {
+  'paint': {
     'circle-color': 'red'
   }
 });
@@ -94,11 +94,11 @@ map.addSource('state_centroids', {
 });
 
 map.addLayer({
-  id: 'points',
-  type: 'circle',
-  source: 'state_centroids',
+  'id': 'points',
+  'type': 'circle',
+  'source': 'state_centroids',
   'source-layer': 'public.state_centroids',
-  paint: {
+  'paint': {
     'circle-color': 'red'
   }
 });
@@ -112,7 +112,7 @@ You can add vector tiles using [Leaflet.VectorGrid](https://github.com/Leaflet/L
 
 ```js
 L.vectorGrid
-  .protobuf('http://localhost:8000/api/v1/tiles/gisdata/public/state_centroids/{z}/{x}/{y}.pbf', {
+  .protobuf('http://localhost:8000/api/v1/tiles/data/public/state_centroids/{z}/{x}/{y}.pbf', {
     vectorTileLayerStyles: {
       'public.state_centroids': {
         color: 'red',
