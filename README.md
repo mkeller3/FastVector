@@ -83,7 +83,6 @@ map.addLayer({
 });
 ```
 
-
 ## Using with MapLibre
 [MapLibre](https://maplibre.org/projects/maplibre-gl-js/) is an Open-source JavaScript library for publishing maps on your websites. 
 
