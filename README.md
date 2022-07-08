@@ -48,12 +48,12 @@ Build Dockerfile into a docker image to deploy to the cloud.
 
 | Method | URL                                                                              | Description                                             |
 | ------ | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `GET`  | `/api/v1/tables.json`                                                            | [Tables](#tables)               |
+| `GET`  | `/api/v1/table/tables.json`                                                            | [Tables](#tables)               |
 | `GET`  | `/api/v1/table/{database}/{scheme}/{table}.json`                                 | [Table JSON](#table-json)         |
 | `GET`  | `/api/v1/tiles/{database}/{scheme}/{table}/{z}/{x}/{y}.pbf`                      | [Tiles](#tiles)    |
-| `GET`  | `/api/v1/tile/{database}/{scheme}/{table}.json`                                  | [Table TileJSON](#table-tile-json) |
-| `DELETE` | `/api/v1/cache`                                                               | [Delete Cache](#cache-delete)  |
-| `GET`  | `/api/v1/cache_size`                                                             | [Cache Size](#cache-size) |
+| `GET`  | `/api/v1/tiles/{database}/{scheme}/{table}.json`                                  | [Table TileJSON](#table-tile-json) |
+| `DELETE` | `/api/v1/tiles/cache`                                                               | [Delete Cache](#cache-delete)  |
+| `GET`  | `/api/v1/tiles/cache_size`                                                             | [Cache Size](#cache-size) |
 | `GET`  | `/viewer/{database}/{scheme}/{table}`                                            | [Viewer](#viewer)               |
 | `GET`  | `/api/v1/health_check`                                                           | Server health check: returns `200 OK`            |
 
@@ -82,6 +82,7 @@ map.addLayer({
   }
 });
 ```
+
 
 ## Using with MapLibre
 [MapLibre](https://maplibre.org/projects/maplibre-gl-js/) is an Open-source JavaScript library for publishing maps on your websites. 
@@ -126,10 +127,10 @@ L.vectorGrid
 Tables endpoint provides a listing of all the tables available to query as vector tiles.
 
 
-Tables endpoint is available at `/api/v1/tables.json`
+Tables endpoint is available at `/api/v1/table/tables.json`
 
 ```shell
-curl http://localhost:8000/api/v1/tables.json
+curl http://localhost:8000/api/v1/table/tables.json
 ```
 
 Example Response
@@ -260,12 +261,12 @@ If you use the cql_filter parameter the tile will not be cached on the server.
 
 ## Table Tile JSON
 
-Table [TileJSON](https://github.com/mapbox/tilejson-spec) endpoint is available at `/api/v1/tile/{database}/{scheme}/{table}.json`
+Table [TileJSON](https://github.com/mapbox/tilejson-spec) endpoint is available at `/api/v1/tiles/{database}/{scheme}/{table}.json`
 
-For example, `states` table in `public` schema in `data` database will be available at `/api/v1/tile/data/public/states.json`
+For example, `states` table in `public` schema in `data` database will be available at `/api/v1/tiles/data/public/states.json`
 
 ```shell
-curl http://localhost:8000/api/v1/tile/data/public/states.json
+curl http://localhost:8000/api/v1/tiles/data/public/states.json
 ```
 
 Example Response
@@ -303,7 +304,7 @@ In your request you have to pass the following.
 Cache Size endpoint allows you to determine the size of a vector tile cache for each table.
 
 ```shell
-curl http://localhost:8000/api/v1/api/v1/cache_size
+curl http://localhost:8000/api/v1/api/v1/tiles/cache_size
 ```
 
 Example Response
